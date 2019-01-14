@@ -245,6 +245,7 @@ def main(args):
     # arquivos vazios ou recem criados
     if len(code) <= 1: code = [fileName,'']
     code = curses.wrapper(draw_menu, code)
+    code = code[1:] # remove titulo
     with open(fileName, 'w') as file: file.writelines('\n'.join(code))
 
 

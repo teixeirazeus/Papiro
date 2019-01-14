@@ -110,6 +110,7 @@ def draw_menu(stdscr):
                 lineIndex -= 1
 
         # Ações
+        # Enter
         elif k == 10:
             p1 = code[:lineNow]  # antes
 
@@ -130,15 +131,31 @@ def draw_menu(stdscr):
             cursor_y += 1
             lineNow += 1
 
+        # Backspace
+        elif k == 263:
+            if lineIndex != 0:
+                code[lineNow] = code[lineNow][:lineIndex - 1] + code[lineNow][lineIndex:]
+                cursor_x -= 1
+                lineIndex -= 1
+            elif lineNow > 1:
+                cursor_y -= 1
+                lineNow -= 1
+                lineIndex = len(code[lineNow])
+                cursor_x += lineIndex
+
+                code[lineNow] += code[lineNow+1]
+                code = code[:lineNow] + code[lineNow:]
+                lenCode -= 1
+
         # Tab
         elif k == 9:
-            code[cursor_y] = code[cursor_y][:lineIndex] + ' '*tabSize + code[cursor_y][lineIndex:]
+            code[lineNow] = code[lineNow][:lineIndex] + ' '*tabSize + code[lineNow][lineIndex:]
             cursor_x = cursor_x + tabSize
             lineIndex += tabSize
 
         # Digitos ascii
         elif k >= 32 and k <= 126:
-            code[cursor_y] = code[cursor_y][:lineIndex]+chr(k)+code[cursor_y][lineIndex:]
+            code[lineNow] = code[lineNow][:lineIndex]+chr(k)+code[lineNow][lineIndex:]
             cursor_x = cursor_x + 1
             lineIndex += 1
 
@@ -192,7 +209,7 @@ def draw_menu(stdscr):
         # Render status bar
         stdscr.attron(curses.color_pair(3))
         stdscr.addstr(height - 1, 0, statusbarstr)
-        stdscr.addstr(height - 1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.addstr(height - 1, len(statusbarstr), " " * (width - len(statusbarstr) -1))
         stdscr.attroff(curses.color_pair(3))
 
         # Turning on attributes for title

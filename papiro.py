@@ -41,14 +41,14 @@ def smartCursor(lineNow, code, atual, cursor_x, lineIndex):
     return cursor_x, lineIndex
 
 
-def draw_menu(stdscr):
+def draw_menu(stdscr, code):
     # code = list(string.ascii_letters)
-    code = ['filename', 'Este e um texto', 'para testar o editor']
+    # code = ['filename', 'Este e um texto', 'para testar o editor']
     lenCode = len(code) - 1  # menos o titulo
 
     # Configurações
     tabSize = 4
-
+    debug = False
 
     # Mapeamento do codigo
     lineNow = 1
@@ -73,7 +73,7 @@ def draw_menu(stdscr):
     curses.init_pair(4, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
     # Loop principal
-    while k != ord('q'):
+    while k != 27:
 
         # Inicialização
         stdscr.clear()
@@ -133,10 +133,12 @@ def draw_menu(stdscr):
 
         # Backspace
         elif k == 263:
+            # Deleta char na linha
             if lineIndex != 0:
                 code[lineNow] = code[lineNow][:lineIndex - 1] + code[lineNow][lineIndex:]
                 cursor_x -= 1
                 lineIndex -= 1
+            # Concatena com linha anterior
             elif lineNow > 1:
                 cursor_y -= 1
                 lineNow -= 1
@@ -144,9 +146,11 @@ def draw_menu(stdscr):
                 cursor_x += lineIndex
 
                 code[lineNow] += code[lineNow+1]
-                code = code[:lineNow] + code[lineNow:]
+                code = code[:lineNow+1] + code[lineNow+2:]
                 lenCode -= 1
-
+                if scroll > 0:
+                    scroll -= 1
+                    cursor_y += 1
         # Tab
         elif k == 9:
             code[lineNow] = code[lineNow][:lineIndex] + ' '*tabSize + code[lineNow][lineIndex:]
@@ -186,43 +190,34 @@ def draw_menu(stdscr):
         # Imprimir codigo
         l = scroll + 1
         for i in range(1, height - 1):
-            if i > lenCode: break
+            if i > lenCode or l > lenCode: break
             stdscr.addstr(i, lenbar + 2, code[l], curses.color_pair(0))
             l += 1
 
         # Strings
-        keystr = "Last key pressed: {}".format(k)[:width - 1]
-        statusbarstr = "Press 'q' to exit | STATUS BAR | Pos: {}, {} | Debug: {} ".format(cursor_x, cursor_y, lineNow)
+        statusbarstr = "Pressione 'esc' para sair | Pos: {}:{} ".format(lineNow, lineIndex)
 
-        if k == 0:
-            keystr = "No key press detected..."[:width - 1]
-
-        # Centering calculations
-        start_x_keystr = int((width // 2) - (len(keystr) // 2) - len(keystr) % 2)
-        start_y = int((height // 2) - 2)
 
         # Barra superior
         stdscr.addstr(0, 0, ' '*width, curses.color_pair(3))
         stdscr.addstr(0, 0, code[0], curses.color_pair(3))
         stdscr.addstr(0, int((width // 2)) - len("PAPIRO"), "PAPIRO", curses.color_pair(3))
 
-        # Render status bar
+        # Barra de status
         stdscr.attron(curses.color_pair(3))
         stdscr.addstr(height - 1, 0, statusbarstr)
         stdscr.addstr(height - 1, len(statusbarstr), " " * (width - len(statusbarstr) -1))
         stdscr.attroff(curses.color_pair(3))
 
-        # Turning on attributes for title
-        stdscr.attron(curses.color_pair(2))
-        stdscr.attron(curses.A_BOLD)
 
-        # Turning off attributes for title
-        stdscr.attroff(curses.color_pair(2))
-        stdscr.attroff(curses.A_BOLD)
+        # Debug
+        if debug:
+            keystr = "Last key pressed: {}".format(k)[:width - 1]
+            start_x_keystr = int((width // 2) - (len(keystr) // 2) - len(keystr) % 2)
+            start_y = int((height // 2) - 2)
+            stdscr.addstr(start_y + 3, (width // 2) - 2, '-' * 4)
+            stdscr.addstr(start_y + 5, start_x_keystr, keystr)
 
-        # Print rest of text
-        stdscr.addstr(start_y + 3, (width // 2) - 2, '-' * 4)
-        stdscr.addstr(start_y + 5, start_x_keystr, keystr)
         stdscr.move(cursor_y, cursor_x)
 
         # Refresh the screen
@@ -232,9 +227,26 @@ def draw_menu(stdscr):
         k = stdscr.getch()
 
 
-def main():
-    curses.wrapper(draw_menu)
+    return code
 
 
-if __name__ == "__main__":
-    main()
+def main(args):
+    if len(args) == 1:
+        print('PAPIRO editor de texto')
+        print('Uso: ./papiro.py <nome_do_arquivo>')
+        return
+
+    fileName = args[1]
+    try:    # Tenta criar um arquivo
+        file = open(fileName, 'x')
+    except: # Se ja existir então leia
+        with open(fileName, 'r') as file: code = [fileName] + [x.rstrip() for x in file.readlines()]
+    # arquivos vazios ou recem criados
+    if len(code) == 1: code = [fileName,'']
+    code = curses.wrapper(draw_menu, code)
+    with open(fileName, 'w') as file: file.writelines('\n'.join(code))
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main(sys.argv))

@@ -23,8 +23,6 @@
 #  
 # import sys, os
 import curses
-# import string
-
 
 def smartCursor(lineNow, code, atual, cursor_x, lineIndex):
     # Colagem de cursor no final do codigo
@@ -45,8 +43,12 @@ def smartCursor(lineNow, code, atual, cursor_x, lineIndex):
 
 def draw_menu(stdscr):
     # code = list(string.ascii_letters)
-    code = ['filename', 'thiago', 'speed boy']
+    code = ['filename', 'Este e um texto', 'para testar o editor']
     lenCode = len(code) - 1  # menos o titulo
+
+    # Configurações
+    tabSize = 4
+
 
     # Mapeamento do codigo
     lineNow = 1
@@ -79,6 +81,7 @@ def draw_menu(stdscr):
 
         lenbar = len(str(lenCode))
 
+		# Begin Analise de tecla
         # Movimento do cursor
         if k == curses.KEY_DOWN:
             if lineNow < lenCode:
@@ -127,6 +130,20 @@ def draw_menu(stdscr):
             cursor_y += 1
             lineNow += 1
 
+        # Tab
+        elif k == 9:
+            code[cursor_y] = code[cursor_y][:lineIndex] + ' '*tabSize + code[cursor_y][lineIndex:]
+            cursor_x = cursor_x + tabSize
+            lineIndex += tabSize
+
+        # Digitos ascii
+        elif k >= 32 and k <= 126:
+            code[cursor_y] = code[cursor_y][:lineIndex]+chr(k)+code[cursor_y][lineIndex:]
+            cursor_x = cursor_x + 1
+            lineIndex += 1
+
+		# End Analise de tecla
+
         # Scroll
         if cursor_y > height - 2:
             if scroll + height - 2 < lenCode:
@@ -153,7 +170,7 @@ def draw_menu(stdscr):
         l = scroll + 1
         for i in range(1, height - 1):
             if i > lenCode: break
-            stdscr.addstr(i, lenbar + 2, code[l], curses.color_pair(4))
+            stdscr.addstr(i, lenbar + 2, code[l], curses.color_pair(0))
             l += 1
 
         # Strings
@@ -167,7 +184,9 @@ def draw_menu(stdscr):
         start_x_keystr = int((width // 2) - (len(keystr) // 2) - len(keystr) % 2)
         start_y = int((height // 2) - 2)
 
-        # Rendering some text
+        # Barra superior
+        stdscr.addstr(0, 0, ' '*width, curses.color_pair(3))
+        stdscr.addstr(0, 0, code[0], curses.color_pair(3))
         stdscr.addstr(0, int((width // 2)) - len("PAPIRO"), "PAPIRO", curses.color_pair(3))
 
         # Render status bar

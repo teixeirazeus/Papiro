@@ -237,12 +237,13 @@ def main(args):
         return
 
     fileName = args[1]
+    code = []
     try:    # Tenta criar um arquivo
         file = open(fileName, 'x')
     except: # Se ja existir então leia
         with open(fileName, 'r') as file: code = [fileName] + [x.rstrip() for x in file.readlines()]
     # arquivos vazios ou recem criados
-    if len(code) == 1: code = [fileName,'']
+    if len(code) <= 1: code = [fileName,'']
     code = curses.wrapper(draw_menu, code)
     with open(fileName, 'w') as file: file.writelines('\n'.join(code))
 
